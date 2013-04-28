@@ -26,6 +26,7 @@ CFLAGS=-Wall -Winline -O2 -g $(BIGFILES)
 # Where you want it installed when you do 'make install'
 PREFIX=/usr/local
 
+PKG_CONFIG_DIR=$(PREFIX)/lib/pkgconfig
 
 OBJS= blocksort.o  \
       huffman.o    \
@@ -69,15 +70,30 @@ test: bzip2
 	cmp sample3.tst sample3.ref
 	@cat words3
 
-install-lib: libbz2.a
+bzip2.pc:
+	@echo 'Generating bzip2.pc'
+	@echo 'prefix='$(PREFIX) > bzip2.pc
+	@echo 'exec_prefix=$${prefix}'        >> bzip2.pc
+	@echo 'libdir=$${prefix}/lib'         >> bzip2.pc
+	@echo 'includedir=$${prefix}/include' >> bzip2.pc
+	@echo 'Name: bzip2'                  >> bzip2.pc
+	@echo 'Description: Lossless, block-sorting data compression' >> bzip2.pc
+	@echo 'Version: 1.0.6'          >> bzip2.pc
+	@echo 'Libs: -L$${libdir}  -lbz2' >> bzip2.pc
+	@echo 'Cflags: -I$${includedir}' >> bzip2.pc
+
+install-lib: libbz2.a bzip2.pc
 	if ( test ! -d $(PREFIX)/lib ) ; then mkdir -p $(PREFIX)/lib ; fi
 	if ( test ! -d $(PREFIX)/man ) ; then mkdir -p $(PREFIX)/man ; fi
 	if ( test ! -d $(PREFIX)/man/man1 ) ; then mkdir -p $(PREFIX)/man/man1 ; fi
 	if ( test ! -d $(PREFIX)/include ) ; then mkdir -p $(PREFIX)/include ; fi
+	if ( test ! -d $(PKG_CONFIG_DIR) ) ; then mkdir -p $(PKG_CONFIG_DIR) ; fi
 	cp -f bzlib.h $(PREFIX)/include
 	chmod a+r $(PREFIX)/include/bzlib.h
 	cp -f libbz2.a $(PREFIX)/lib
 	chmod a+r $(PREFIX)/lib/libbz2.a
+	mv bzip2.pc $(PKG_CONFIG_DIR)
+	chmod a+r $(PKG_CONFIG_DIR)/bzip2.pc
 
 install-bin: bzip2 bzip2recover
 	if ( test ! -d $(PREFIX)/bin ) ; then mkdir -p $(PREFIX)/bin ; fi
@@ -115,7 +131,7 @@ install-bin: bzip2 bzip2recover
 install: install-lib install-bin
 
 clean: 
-	rm -f *.o libbz2.a bzip2 bzip2recover \
+	rm -f *.o libbz2.a bzip2 bzip2recover bzip2.pc\
 	sample1.rb2 sample2.rb2 sample3.rb2 \
 	sample1.tst sample2.tst sample3.tst
 
